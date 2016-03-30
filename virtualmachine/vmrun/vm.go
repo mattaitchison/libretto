@@ -46,7 +46,7 @@ var ErrVmrunTimeout = errors.New("Timed out waiting for vmrun")
 // Regular expression to parse the VMX file
 var ethernetRegexp = regexp.MustCompile(`ethernet.*\n`)
 
-var runner Runner = vmrunRunner{}
+var VMRunner Runner = vmrunRunner{}
 
 // Backing is the network card backing type for VMware virtual machines.
 type Backing int
@@ -70,8 +70,7 @@ type Runner interface {
 }
 
 // vmrunRunner implements the Runner interface.
-type vmrunRunner struct {
-}
+type vmrunRunner struct{}
 
 // Run runs a vmrun command.
 func (f vmrunRunner) Run(args ...string) (string, string, error) {
@@ -179,11 +178,11 @@ func (vm *VM) haltWithFlag(hard bool) error {
 	// FIXME: Cannot use nogui flag here, it breaks vmrun's getGuestIP
 	// functionality.
 	flag := "soft"
-	if (hard) {
+	if hard {
 		flag = "hard"
 	}
-		
-	_, err := runner.RunCombinedError("stop", vm.VmxFilePath, flag)
+
+	_, err := VMRunner.RunCombinedError("stop", vm.VmxFilePath, flag)
 
 	if err != nil {
 		return err
@@ -207,7 +206,7 @@ func (vm *VM) Suspend() error {
 
 	// FIXME: Cannot use nogui flag here, it breaks vmrun's getGuestIP
 	// functionality.
-	_, err := runner.RunCombinedError("suspend", vm.VmxFilePath)
+	_, err := VMRunner.RunCombinedError("suspend", vm.VmxFilePath)
 	if err != nil {
 		return err
 	}
@@ -230,7 +229,7 @@ func (vm *VM) Start() error {
 
 	// FIXME: Cannot use nogui flag here, it breaks vmrun's getGuestIP
 	// functionality.
-	out, err := runner.RunCombinedError("start", vm.VmxFilePath)
+	out, err := VMRunner.RunCombinedError("start", vm.VmxFilePath)
 	if err != nil {
 		return lvm.WrapErrors(err, errors.New(out))
 	}
@@ -247,7 +246,7 @@ func (vm *VM) GetIPs() ([]net.IP, error) {
 
 // GetState gets the power state of the VM through VMware tools.
 func (vm *VM) GetState() (string, error) {
-	stdout, stderr, err := runner.Run("list")
+	stdout, stderr, err := VMRunner.Run("list")
 	if err != nil {
 		return "", err
 	}
@@ -380,7 +379,7 @@ func (vm *VM) requestIPs() []net.IP {
 	ips := []net.IP{}
 	// FIXME: Cannot use nogui flag here, it breaks vmrun's getGuestIP
 	// functionality.
-	stdout, _, _ := runner.Run("getGuestIPAddress", vm.VmxFilePath, "wait")
+	stdout, _, _ := VMRunner.Run("getGuestIPAddress", vm.VmxFilePath, "wait")
 	if stdout != "" {
 		if ip := net.ParseIP(strings.TrimSpace(stdout)); ip != nil {
 			ips = append(ips, ip)

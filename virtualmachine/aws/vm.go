@@ -89,6 +89,7 @@ type VM struct {
 	InstanceType string
 	InstanceID   string
 	KeyPair      string // required
+	UserData     string
 
 	DeviceName                   string
 	VolumeSize                   int
